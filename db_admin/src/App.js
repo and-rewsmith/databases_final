@@ -3,11 +3,12 @@ import React from 'react';
 import { Admin, Resource, ListGuesser } from 'react-admin';
 import jsonServerProvider from 'ra-data-json-server';
 import { UserList } from './users';
+import dataProvider from './dataProvider';
 
-const dataProvider = jsonServerProvider('http://jsonplaceholder.typicode.com');
+
 const App = () => (
     <Admin dataProvider={dataProvider}>
-        <Resource name="users" list={UserList} />
+        <Resource name="books" list={UserList} />
     </Admin>
 );
 
