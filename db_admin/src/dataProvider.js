@@ -14,7 +14,7 @@ const util = require('util');
 //import { stringify } from 'query-string';
 //const queryString = require('query-string');
 
-const API_URL = 'http://localhost:3001/admin';
+const API_URL = 'http://localhost:3001';
 
 /**
  * @param {String} type One of the constants appearing at the top if this file, e.g. 'UPDATE'

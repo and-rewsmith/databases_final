@@ -45,7 +45,7 @@ app.get('/', (req, res) => res.send('Placeholder'));
 //GET_LIST: ?sort=['title','ASC']&range=[0, 24]&filter={title:'bar'}
 //GET_MANY: ?filter={ids:[123,456,789]}
 //GET_MANY_REFERENCE: ?filter={author_id:345
-app.get('/admin/books', (req, res) => {
+app.get('/books', (req, res) => {
 	// connection.connect()
 
 	// connection.query('SELECT * FROM book', function (err, rows, fields) {
@@ -75,7 +75,7 @@ app.get('/admin/books', (req, res) => {
 
 });
 
-app.get('/admin/books/:id', (req, res) => {
+app.get('/books/:id', (req, res) => {
 	connection.connect()
 
 	// connection.query('SELECT * FROM book WHERE id=' + req.params.id, function (err, rows, fields) {
@@ -93,7 +93,7 @@ app.get('/admin/books/:id', (req, res) => {
 });
 
 //CREATE
-app.post('/admin/books', (req, res) => {
+app.post('/books', (req, res) => {
 	// connection.connect()
 
 	// body = res.body;
@@ -116,14 +116,14 @@ app.post('/admin/books', (req, res) => {
 });
 
 //UPDATE
-app.put('/admin/books/:id', (req, res) => {
+app.put('/books/:id', (req, res) => {
 	res.send({
 	    data: { id: 123, title: "hello, world!" }
 	});
 });
 
 //DELETE
-app.delete('/admin/books/:id', (req, res) => {
+app.delete('/books/:id', (req, res) => {
 	res.send({
 	    data: { id: 123, title: "hello, world!" }
 	});
