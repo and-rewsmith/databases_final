@@ -44,18 +44,30 @@ app.get('/', (req, res) => res.send('Placeholder'));
 //GET_MANY_REFERENCE: ?filter={author_id:345}
 app.get('/books', (req, res) => {
 
+	let range = null;
+	let sort = null;
+	let filter = null;
+	
 	if (req.query.range == null) {
 		range = [0, 25];
+	}
+	else {
+		range = JSON.parse(req.query.range);
 	}
 	if (req.query.sort == null) {
 		sort = ["book_id", "ASC"];
 	}
+	else {
+		sort = JSON.parse(req.query.sort);
+	}
+	if (req.query.filter == null) {
+		filter = '';
+	}
+	else {
+		filter = JSON.parse(req.query.filter);
+	}
 
-	let sort = JSON.parse(req.query.sort);
-	let range = JSON.parse(req.query.range);
-	let filter = JSON.parse(req.query.filter);
-
-	let field = sort[0]
+	let field = sort[0];
 	let order = sort[1];
 	let start_index = range[0];
 	let max_entries = range[1];
@@ -76,12 +88,15 @@ app.get('/books', (req, res) => {
 	connection.query(sql_query, function (err, rows, fields) {
 	  if (err) throw err;
 	  rows = JSON.parse(JSON.stringify(rows));
-	  res.send(rows);
+
+	  connection.query("SELECT COUNT(*) as count FROM book;", function (err, count_row, fields) {
+	  	let output = {data: rows, total: count_row[0]["count"]};
+	  	console.log(output.data);
+	  	console.log(output.total)
+		  res.send(output);
+		});
+
 	});
-
-
-	//res.send([{ id: 123, title: "hello, world!" }]);
-
 
 });
 

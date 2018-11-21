@@ -94,10 +94,11 @@ const convertHTTPResponseToDataProvider = (response, type, resource, params) => 
     const { headers, json } = response;
     switch (type) {
     case GET_LIST:
-        return {
-            data: json,
-            total: json.length,
+        let output = {
+            data: json.data,
+            total: json.total,
         };
+        return output;
     case CREATE:
         return { data: { ...params.data, id: json.id } };
     default:
