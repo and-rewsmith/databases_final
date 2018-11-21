@@ -12,9 +12,6 @@ app.all('/*', function(req, res, next) {
   res.header("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT");
   res.header("Access-Control-Expose-Headers", "X-Total-Count");
   res.header("X-Total-Count", 100);
-
-  //req.header("Access-Control-Allow-Origin", )
-
   next();
 });
 
@@ -44,47 +41,57 @@ app.get('/', (req, res) => res.send('Placeholder'));
 
 //GET_LIST: ?sort=['title','ASC']&range=[0, 24]&filter={title:'bar'}
 //GET_MANY: ?filter={ids:[123,456,789]}
-//GET_MANY_REFERENCE: ?filter={author_id:345
+//GET_MANY_REFERENCE: ?filter={author_id:345}
 app.get('/books', (req, res) => {
-	// connection.connect()
 
-	// connection.query('SELECT * FROM book', function (err, rows, fields) {
-	//   if (err) throw err;
+	if (req.query.range == null) {
+		range = [0, 25];
+	}
+	if (req.query.sort == null) {
+		sort = ["book_id", "ASC"];
+	}
 
-	//   res.send({data: rows});
-	// });
+	let sort = JSON.parse(req.query.sort);
+	let range = JSON.parse(req.query.range);
+	let filter = JSON.parse(req.query.filter);
 
-	// connection.end();
+	let field = sort[0]
+	let order = sort[1];
+	let start_index = range[0];
+	let max_entries = range[1];
 
-	// console.log("BOOM");
+	//Condition is a reserved word so I couldn't make this map well like the other aliases
+	if (field == "Condition") {
+		field = "Cond";
+	}
 
-	// if (req.query.sort == null) {
-	// 	res.send({
-	// 	    data: [{ id: 123, title: "hello, world!" }]
-	// 	});
-	// }
-	// else {
-	// 	res.send({
-	// 	    data: [{ id: 123, title: "hello, world!" }],
-	// 	    total: 1
-	// 	});
-	// }
+	let sql_query = `SELECT book.book_id as id, isbn_table.title as Title, CONCAT(author.first_name, ' ', author.last_name) as Author, isbn_table.format as Format, isbn_table.pages as Pages, book.isbn as ISBN, isbn_table.dewey as Dewey, book.con as Cond FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
 
-	res.send([{ id: 123, title: "hello, world!" }]);
+	// console.log(sql_query);
+	// console.log(sort);
+	// console.log(range);
+	// console.log(filter);
+	// console.log('\n');
+
+	connection.query(sql_query, function (err, rows, fields) {
+	  if (err) throw err;
+	  rows = JSON.parse(JSON.stringify(rows));
+	  res.send(rows);
+	});
+
+
+	//res.send([{ id: 123, title: "hello, world!" }]);
 
 
 });
 
 app.get('/books/:id', (req, res) => {
-	connection.connect()
 
 	// connection.query('SELECT * FROM book WHERE id=' + req.params.id, function (err, rows, fields) {
 	//   if (err) throw err;
 
 	//   res.send(JSON.stringify(rows));
 	// });
-
-	connection.end();
 
 	res.send({
 	    data: { id: 123, title: "hello, world!" }
@@ -94,7 +101,6 @@ app.get('/books/:id', (req, res) => {
 
 //CREATE
 app.post('/books', (req, res) => {
-	// connection.connect()
 
 	// body = res.body;
 	// ISBN = body["ISBN"];

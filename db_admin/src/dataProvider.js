@@ -9,10 +9,11 @@ import {
     DELETE,
     fetchUtils,
 } from 'react-admin';
+import { stringify } from 'query-string';
+
 
 const util = require('util');
-//import { stringify } from 'query-string';
-//const queryString = require('query-string');
+const queryString = require('query-string');
 
 const API_URL = 'http://localhost:3001';
 
@@ -32,7 +33,17 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
 
     switch (type) {
     case GET_LIST: {
-        return { url: `${API_URL}/${resource}` };
+        const { page, perPage } = params.pagination;
+        const { field, order } = params.sort;
+        const query = {
+            sort: JSON.stringify([field, order]),
+            range: JSON.stringify([
+                (page - 1) * perPage,
+                perPage,
+            ]),
+            filter: JSON.stringify(params.filter),
+        };
+        return {url: `${API_URL}/${resource}?${stringify(query)}`}
     }
     case GET_ONE:
         return { url: `${API_URL}/${resource}/${params.id}` };
@@ -40,7 +51,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
         const query = {
             filter: JSON.stringify({ id: params.ids }),
         };
-        return { url: `${API_URL}/${resource}?${JSON.stringify(query)}` };
+        return { url: `${API_URL}/${resource}?${stringify(query)}` };
     }
     // case GET_MANY_REFERENCE: {
     //     const { page, perPage } = params.pagination;
@@ -101,6 +112,7 @@ const convertHTTPResponseToDataProvider = (response, type, resource, params) => 
  * @returns {Promise} the Promise for response
  */
 export default (type, resource, params) => {
+    console.log(params);
     const { fetchJson } = fetchUtils;
     const { url, options } = convertDataProviderRequestToHTTP(type, resource, params);
     return fetchJson(url, options)
