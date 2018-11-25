@@ -32,6 +32,13 @@ create table if not exists book(
     PRIMARY KEY (book_id)
 );
 
+-- create table if not exists uuid(
+--     uuid        INT,
+--     book_id     INT,
+--     PRIMARY KEY (uuid),
+--     foreign key (book_id) references book(book_id)
+-- );
+
 create table if not exists author(
     author_id   int NOT NULL AUTO_INCREMENT,
     last_name   varchar(256)    NOT NULL,
@@ -57,8 +64,8 @@ create table if not exists writes(
     write_id    int NOT NULL AUTO_INCREMENT,
     isbn        varchar(15) NOT NULL,
     author_id   int NOT NULL,
-    foreign key (author_id) references author(author_id),
-    foreign key (isbn) references isbn_table(isbn),
+    foreign key (author_id) references author(author_id) ON DELETE CASCADE,
+    foreign key (isbn) references isbn_table(isbn) ON DELETE CASCADE,
     PRIMARY KEY (write_id)
 );
 
@@ -66,8 +73,8 @@ create table if not exists sells(
     sell_id int NOT NULL AUTO_INCREMENT,
     isbn        varchar(15) NOT NULL,
     vendor_id   int NOT NULL,
-    foreign key (vendor_id) references vendor(vendor_id),
-    foreign key (isbn) references isbn_table(isbn),
+    foreign key (vendor_id) references vendor(vendor_id) ON DELETE CASCADE,
+    foreign key (isbn) references isbn_table(isbn) ON DELETE CASCADE,
     PRIMARY KEY (sell_id)
 );
 
@@ -75,8 +82,8 @@ create table if not exists publishes(
     publish_id int NOT NULL AUTO_INCREMENT,
     isbn        varchar(15) NOT NULL,
     publisher_id   int NOT NULL,
-    foreign key (publisher_id) references publisher(publisher_id),
-    foreign key (isbn) references isbn_table(isbn),
+    foreign key (publisher_id) references publisher(publisher_id) ON DELETE CASCADE,
+    foreign key (isbn) references isbn_table(isbn) ON DELETE CASCADE,
     PRIMARY KEY (publish_id)
 );
 
@@ -85,8 +92,8 @@ create table if not exists checked_out(
     book_id        int NOT NULL,
     patron_id   int NOT NULL,
     start_date  date NOT NULL,
-    foreign key (book_id) references book(book_id),
-    foreign key (patron_id) references patron(patron_id),
+    foreign key (book_id) references book(book_id) ON DELETE CASCADE,
+    foreign key (patron_id) references patron(patron_id) ON DELETE CASCADE,
     PRIMARY KEY (checked_out_id)
 );
 
@@ -94,8 +101,8 @@ create table if not exists reserves(
     reserves_id int NOT NULL AUTO_INCREMENT,
     book_id        int NOT NULL,
     patron_id   int NOT NULL,
-    foreign key (book_id) references book(book_id),
-    foreign key (patron_id) references patron(patron_id),
+    foreign key (book_id) references book(book_id) ON DELETE CASCADE,
+    foreign key (patron_id) references patron(patron_id) ON DELETE CASCADE,
     PRIMARY KEY (reserves_id)
 );
 

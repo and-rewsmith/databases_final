@@ -8,6 +8,7 @@ import {
     UPDATE,
     DELETE,
     fetchUtils,
+    DELETE_MANY
 } from 'react-admin';
 import { stringify } from 'query-string';
 
@@ -63,6 +64,7 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     //     };
     //     return { url: `${API_URL}/${resource}?${stringify(query)}` };
     // }
+    
     case UPDATE:
         return {
             url: `${API_URL}/${resource}/${params.id}`,
@@ -76,6 +78,14 @@ const convertDataProviderRequestToHTTP = (type, resource, params) => {
     case DELETE:
         return {
             url: `${API_URL}/${resource}/${params.id}`,
+            options: { method: 'DELETE' },
+        };
+    case DELETE_MANY:
+        const query = {
+            filter: JSON.stringify({ id: params.ids }),
+        };
+        return {
+            url: `${API_URL}/${resource}?${stringify(query)}`,
             options: { method: 'DELETE' },
         };
     default:
@@ -101,8 +111,15 @@ const convertHTTPResponseToDataProvider = (response, type, resource, params) => 
         return output;
     case CREATE:
         return { data: { ...params.data, id: json.id } };
+    case GET_ONE:
+        if (json.status) {
+            throw {status: json.status};
+        }
+        else {
+            return json
+        }
     default:
-        return { data: json };
+        return json;
     }
 };
 
