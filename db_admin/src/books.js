@@ -6,7 +6,7 @@ import {
     Datagrid,
     EmailField,
     TextField, Filter, ReferenceInput, SelectInput, TextInput, UrlField, EditButton, Create, SimpleForm, LongTextInput,
-    Edit, DisabledInput
+    Edit, DisabledInput, FormDataConsumer, BooleanInput
 } from 'react-admin';
 
 
@@ -73,27 +73,6 @@ function makeRequest (method, url) {
 }
 
 
-
-
-// function makeRequest (method, url, done) {
-//   var xhr = new XMLHttpRequest();
-//   xhr.open(method, url);
-//   xhr.onload = function () {
-//     if (xhr.response) {
-//         done({}, xhr.response);
-//     }
-//     else {
-//         done({isbn: ["ISBN not found. If the ISBN is valid, please add it first."]}, xhr.response);
-//     }
-//   };
-//   xhr.onerror = function () {
-//     let err_message = "Server returned " + xhr.status;  
-//     done({isbn: [err_message]});
-//   };
-//   xhr.send();
-// }
-
-
 const validateBookCreation = (values) => {
      let edit_validation_endpoint = "http://localhost:3001/isbn/" + JSON.stringify(values.isbn);
     // return makeRequest("GET", edit_validation_endpoint, function(err, datums) {
@@ -133,15 +112,67 @@ export const BookEdit = props => (
     </Edit>
 );
 
+
 // in src/posts.js
 // reference an ISBN to make a book
 export const BookCreate = props => (
     <Create {...props}>
-        <SimpleForm>
-            // <ReferenceInput source="id" reference="ISBN">
-            //     <SelectInput optionText="ISBN" />
-            // </ReferenceInput>
-            // <TextInput source="con" />
-        </SimpleForm>
+        <SimpleForm submitOnEnter={false} redirect="list" asyncValidate={validateBookCreation} asyncBlurFields={[ 'isbn' ]}>
+            <BooleanInput label="Create an Isbn" source="isIsbn" />
+            <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    if (formData.isIsbn) {
+                        return <TextInput source="newIsbn" {...rest} />
+                    }
+                    else {
+                        return <TextInput source="isbn"  {...rest} />
+                    }
+                }
+                }
+            </FormDataConsumer>
+            <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    if (formData.isIsbn) {
+                        return <TextInput source="title" {...rest} />
+                    }
+                    else {
+                        return <SelectInput label="Condition" source="con" choices={[
+               { id: 'excellent', name: 'Excellent' },
+               { id: 'good', name: 'Good' },
+               { id: 'poor', name: 'Poor' },
+               { id: 'bad', name: 'Bad' },
+            ]} {...rest} />
+                    }
+                }
+                }
+            </FormDataConsumer>
+            <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    if (formData.isIsbn) {
+                        return <TextInput source="dewey" {...rest} />
+                    }
+                }
+                }
+             </FormDataConsumer>
+            <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    if (formData.isIsbn) {
+                        return <SelectInput label="Condition" source="format" choices={[
+                           { id: 'hard', name: 'Hard' },
+                           { id: 'paper', name: 'Paper' },
+                        ]} {...rest} />
+                    }
+                }
+                }
+            </FormDataConsumer>
+            <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    if (formData.isIsbn) {
+                        return <TextInput source="pages" {...rest} />
+                    }
+                }
+                }
+             </FormDataConsumer>
+         </SimpleForm>
     </Create>
 );

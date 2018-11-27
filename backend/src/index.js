@@ -40,10 +40,25 @@ var connection = mysql.createConnection({
 
 
 
+let promisifiedQuery = (query) => {
+	return new Promise(function(resolve, reject) {
+        // The Promise constructor should catch any errors thrown on
+        // this tick. Alternately, try/catch and reject(err) on catch.
 
-let deleteFromDB = (ids, res) => {
+        connection.query(query, function (err, rows, fields) {
+            // Call reject on error states,
+            // call resolve with results
+            if (err) {
+                return reject(err);
+            }
+            resolve(rows);
+        });
+    });
+}
 
-	console.log(ids);
+
+async function deleteFromDB(ids, res) {
+
 
 	let select_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE book.book_id=`;
 	let delete_query = `DELETE FROM book WHERE book_id=`;
@@ -51,52 +66,48 @@ let deleteFromDB = (ids, res) => {
 	out = [];
 	let first_record = null;
 	for (i=0; i<ids.length; i++) {
-		console.log(select_query+ids[i]);
-		console.log(delete_query+ids[i]);
-		let tmp_delete_query = delete_query + ids[i];
+		
+		let tmp_select_query = select_query+ids[i] + ";";
+		let tmp_delete_query = delete_query + ids[i] + ";";
+		console.log("SELECT ELEMENT TO BE DELETED:");
+		console.log(tmp_select_query);
+		console.log();
+		console.log("DELETE ELEMENT:");
+		console.log(tmp_delete_query);
+		console.log();
 
-		connection.query(select_query+ids[i], function (err, rows, fields) {
-	      	if (err) throw err;
-		  	record = JSON.parse(JSON.stringify(rows))[0];
-		  	console.log("SELECTED:");
-		  	console.log(record);
-		  	console.log();
-		  	if (i == 0) {
-		  		first_record = record;
-		  	}
-		  	console.log("DELETE QUERY:");
-		  	console.log(tmp_delete_query);
-		  	console.log(ids);
-			connection.query(tmp_delete_query, function (err, rows, fields) {
-		      	if (err) throw err;		  
-			  	out.push(record.id);
+		await promisifiedQuery(tmp_select_query)
+			.then(async function (rows) {
+			  	record = JSON.parse(JSON.stringify(rows))[0];
+			  	if (i == 0) {
+			  		first_record = record;
+			  	}
+				await promisifiedQuery(tmp_delete_query)
+				.then(function(rows) {
+				  	out.push(record.id);
+				  	if (i == ids.length-1) {
+			  			if (ids.length > 1) {
+							res.send({data: out});
+						}
+						else if (ids.length == 1) {
+							res.send({data: first_record});
+						}
+				  	}
+				})
+				.catch( function(err) {
+					res.send({status: 500});
+				});
+			})
+			.catch( function (err) {
+				res.send({status: 500});
 			});
-		});
 	}
-
-	if (ids.length > 1) {
-		return {data: out};
-	}
-	else if (ids.length == 1) {
-		return {data: first_record};
-	}
-
-	res.send({data: {id:1}});
 }
 
 
-
-
-
-
-
 app.get('/', (req, res) => {
-	console.log("DEBUG ROOT");
 	res.send('Placeholder');
 });
-
-// append /admin for our http requests
-//app.use("/admin", admin);
 
 //GET_LIST: ?sort=['title','ASC']&range=[0, 24]&filter={title:'bar'}
 //GET_MANY: ?filter={ids:[123,456,789]}
@@ -131,18 +142,10 @@ app.get('/books', (req, res) => {
 	let start_index = range[0];
 	let max_entries = range[1];
 
-	// //Condition is a reserved word so I couldn't make this map well like the other aliases
-	// if (field == "Condition") {
-	// 	field = "Cond";
-	// }
-
 	let sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
-
-	// console.log(sql_query);
-	// console.log(sort);
-	// console.log(range);
-	// console.log(filter);
-	// console.log('\n');
+	console.log("GET LISTVIEW QUERY:");
+	console.log(sql_query);
+	console.log();
 
 	connection.query(sql_query, function (err, rows, fields) {
 	  if (err) throw err;
@@ -150,8 +153,6 @@ app.get('/books', (req, res) => {
 
 	  connection.query("SELECT COUNT(*) as count FROM book;", function (err, count_row, fields) {
 	  	let output = {data: rows, total: count_row[0]["count"]};
-	  	// console.log(output.data);
-	  	// console.log(output.total)
 		res.send(output);
 	  });
 
@@ -161,7 +162,11 @@ app.get('/books', (req, res) => {
 
 app.get('/books/:id', (req, res) => {
 
-	let sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE book.book_id=` + req.params.id;
+	let sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE book.book_id=` + req.params.id + ";";
+
+	console.log("GET ONE RECORD QUERY:");
+	console.log(sql_query);
+	console.log();
 
 	connection.query(sql_query, function (err, rows, fields) {
 	  if (err) throw err;
@@ -180,24 +185,52 @@ app.get('/books/:id', (req, res) => {
 //CREATE
 app.post('/books', (req, res) => {
 
-	// body = res.body;
-	// ISBN = body["ISBN"];
-	// con = body["con"];
+	let create_query = ""
+	let id_query = `SELECT LAST_INSERT_ID() as id;`
+	let select_query = "";
 
-	// connection.query('INSERT INTO book (ISBN, con) VALUES (${ISBN}, ${con});' + req.params.id, function (err, rows, fields) {
-	//   if (err) throw err;
 
-	//   res.send({success: true});
-	// });
+	if (req.body.isIsbn) {
+		create_query = `INSERT INTO isbn_table (isbn, title, dewey, format, pages) VALUES (\"${req.body.isbn}\", \"${req.body.title}\", ${req.body.dewey}, \"${req.body.format}\", ${req.body.pages});`;
+		select_query = "SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY id DESC LIMIT 0, 1;";
+	}
+	else {
+		create_query = `INSERT INTO book (con, isbn) VALUES (\"${req.body.con}\", \"${req.body.isbn}\");`;
+		select_query = "SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE book.book_id=";
+	}
+		
+	console.log("CREATE QUERY:");
+	console.log(create_query);
+	console.log();
+	console.log("LAST ID QUERY:");
+	console.log(id_query);
+	console.log();
+	connection.query(create_query, function (err, rows, fields) {
+	  if (err) throw err;
+	  connection.query(id_query, function (err, rows, fields) {
+		  if (err) throw err;
+		  record = JSON.parse(JSON.stringify(rows))[0];
+		  let tmp_select_query = select_query;
+		  if (!req.body.isIsbn) {
+		  	tmp_select_query += record.id + ";";
+		  }
+		  console.log("GET ONE RECORD QUERY:");
+		  console.log(tmp_select_query);
+		  console.log();
+		  connection.query(tmp_select_query, function (err, rows, fields) {
+			  if (err) throw err;
+			  record = JSON.parse(JSON.stringify(rows))[0];
+			  if (record != null) {
+			  	res.send({data: record});
+			  }
+			  else {
+			  	res.send({status: 404});
+			  }  
+		  });
+	  });
 
-	// connection.end();
-
-	res.send({
-	    data: { id: 123, title: "hello, world!" }
 	});
 
-
-	//TODO: get id and make mapping
 });
 
 //UPDATE
@@ -205,7 +238,7 @@ app.put('/books/:id', (req, res) => {
 
 	let update_query = `UPDATE book SET isbn = ${req.body.isbn},con = \"${req.body.con}\" WHERE book_id = ${req.body.id};`
 
-	let select_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE book.book_id=` + req.params.id;
+	let select_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE book.book_id=` + req.params.id + ";";
 
 	connection.query(update_query, function (err, rows, fields) {
 	  if (err) throw err;
@@ -235,13 +268,27 @@ app.delete('/books', (req, res) => {
 
 app.get('/isbn/:id', (req, res) => {
 
-	let sql_query = `SELECT isbn_table.isbn FROM isbn_table WHERE isbn_table.isbn=` + req.params.id;
+	if (!req.params.id) {
+		res.send({status: 404});
+	}
+
+	// catch the case where the framework sends undefined validation for hidden form page (framework doesn't like how I'm using their forms)
+	else if (req.params.id == "undefined") {
+		res.send({data: {isbn: undefined}});
+		return;
+	}
+
+	let sql_query = `SELECT isbn_table.isbn FROM isbn_table WHERE isbn_table.isbn=` + req.params.id + ";";
+	console.log("ISBN ASYNC VALIDATION QUERY");
+	console.log(req.params.id);
+	console.log("undefined");
+	console.log(typeof(req.params.id));
 	console.log(sql_query);
+	console.log();
 
 	connection.query(sql_query, function (err, rows, fields) {
 	  if (err) throw err;
 	  record = JSON.parse(JSON.stringify(rows))[0];
-	  console.log(record);
 	  if (record != undefined) {
 	  	res.send({data: record});
 	  }
@@ -252,9 +299,5 @@ app.get('/isbn/:id', (req, res) => {
 	});
 
 });
-
-
-
-
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`))
