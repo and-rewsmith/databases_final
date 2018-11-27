@@ -73,16 +73,13 @@ function makeRequest (method, url) {
 }
 
 
-const validateBookCreation = (values) => {
+const validateBookCreationAsync = (values) => {
      let edit_validation_endpoint = "http://localhost:3001/isbn/" + JSON.stringify(values.isbn);
-    // return makeRequest("GET", edit_validation_endpoint, function(err, datums) {
-    //     return err;
-    // });
 
     return makeRequest('GET', edit_validation_endpoint)
         .then(function (response) {
             response = JSON.parse(response)
-            if (response.status) {
+            if (!values.isIsbn && response.status) {
                 throw {isbn: ["ISBN not found. If the ISBN is valid, please add it first."]};
             }
         })
@@ -94,7 +91,7 @@ const validateBookCreation = (values) => {
 export const BookEdit = props => (
 
     <Edit title={<BookTitle />} {...props}>
-        <SimpleForm submitOnEnter={false} asyncValidate={validateBookCreation} asyncBlurFields={[ 'isbn' ]}>
+        <SimpleForm submitOnEnter={false} asyncValidate={validateBookCreationAsync} asyncBlurFields={[ 'isbn' ]}>
             <DisabledInput source="id" />
             <DisabledInput source="title" />
             <DisabledInput source="author" />
@@ -117,7 +114,7 @@ export const BookEdit = props => (
 // reference an ISBN to make a book
 export const BookCreate = props => (
     <Create {...props}>
-        <SimpleForm submitOnEnter={false} redirect="list" asyncValidate={validateBookCreation} asyncBlurFields={[ 'isbn' ]}>
+        <SimpleForm submitOnEnter={false} redirect="list" asyncValidate={validateBookCreationAsync}>
             <BooleanInput label="Create an Isbn" source="isIsbn" />
             <FormDataConsumer>
                 {({ formData, ...rest }) => {

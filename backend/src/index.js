@@ -189,14 +189,17 @@ app.post('/books', (req, res) => {
 	let id_query = `SELECT LAST_INSERT_ID() as id;`
 	let select_query = "";
 
+	console.log(req.body);
+
 
 	if (req.body.isIsbn) {
-		create_query = `INSERT INTO isbn_table (isbn, title, dewey, format, pages) VALUES (\"${req.body.isbn}\", \"${req.body.title}\", ${req.body.dewey}, \"${req.body.format}\", ${req.body.pages});`;
+		create_query = `INSERT INTO isbn_table (isbn, title, dewey, format, pages) VALUES (\"${req.body.newIsbn}\", \"${req.body.title}\", ${req.body.dewey}, \"${req.body.format}\", ${req.body.pages});`;
 		select_query = "SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY id DESC LIMIT 0, 1;";
 	}
 	else {
 		create_query = `INSERT INTO book (con, isbn) VALUES (\"${req.body.con}\", \"${req.body.isbn}\");`;
 		select_query = "SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE book.book_id=";
+
 	}
 		
 	console.log("CREATE QUERY:");
