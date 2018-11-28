@@ -154,7 +154,7 @@ export const BookCreate = props => (
             <FormDataConsumer>
                 {({ formData, ...rest }) => {
                     if (formData.isIsbn) {
-                        return <SelectInput label="Condition" source="format" choices={[
+                        return <SelectInput source="format" choices={[
                            { id: 'hard', name: 'Hard' },
                            { id: 'paper', name: 'Paper' },
                         ]} {...rest} />
@@ -166,6 +166,22 @@ export const BookCreate = props => (
                 {({ formData, ...rest }) => {
                     if (formData.isIsbn) {
                         return <TextInput source="pages" {...rest} />
+                    }
+                }
+                }
+             </FormDataConsumer>
+             <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    if (formData.isIsbn) {
+                        return <TextInput source="authorFirstName" {...rest} />
+                    }
+                }
+                }
+             </FormDataConsumer>
+             <FormDataConsumer>
+                {({ formData, ...rest }) => {
+                    if (formData.isIsbn) {
+                        return <TextInput source="authorLastName" {...rest} />
                     }
                 }
                 }
