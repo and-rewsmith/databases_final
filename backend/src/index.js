@@ -30,10 +30,11 @@ app.use(cors(corsOptions));
 app.use(bodyParser.json())
 
 var connection = mysql.createConnection({
-  host     : 'localhost',
-  user     : 'root',
-  password : 'password',
-  database : 'Library'
+  host     : 'yingqing-4750.ctheaw88fxx7.us-east-1.rds.amazonaws.com',
+  user     : 'andrew',
+  password : 'andrew',
+  database : 'Library',
+  port: 3306,
 });
 
 
@@ -95,10 +96,11 @@ async function deleteFromDB(ids, res) {
 				  	}
 				})
 				.catch( function(err) {
-					res.send({status: 500});
+					throw err;
 				});
 			})
 			.catch( function (err) {
+				console.log(err);
 				res.send({status: 500});
 			});
 	}
@@ -166,9 +168,9 @@ async function create(req, res) {
 
 		if (req.body.isIsbn) {
 			let create_author_query = `INSERT INTO author (last_name, first_name) VALUES (\"${req.body.authorLastName}\", \"${req.body.authorFirstName}\");`
-			console.log("CREATE AUTHOR QUERY:");
-			console.log(create_author_query);
-			console.log();
+			// console.log("CREATE AUTHOR QUERY:");
+			// console.log(create_author_query);
+			// console.log();
 
 			await promisifiedQuery(create_author_query)
 			.then(async function(rows) {
@@ -209,44 +211,49 @@ app.get('/', (req, res) => {
 //GET_MANY_REFERENCE: ?filter={author_id:345}
 app.get('/books', (req, res) => {
 
-	let range = null;
-	let sort = null;
-	let filter = null;
-	
-	if (req.query.range == null) {
-		range = [0, 25];
-	}
-	else {
-		range = JSON.parse(req.query.range);
-	}
-	if (req.query.sort == null) {
-		sort = ["book_id", "ASC"];
-	}
-	else {
-		sort = JSON.parse(req.query.sort);
-	}
-	if (req.query.filter == null) {
-		filter = '';
-	}
-	else {
-		filter = JSON.parse(req.query.filter);
-	}
+	let range = JSON.parse(req.query.range);
+	let sort = JSON.parse(req.query.sort);
+	let filter = JSON.parse(req.query.filter);
+
+	console.log(range);
+	console.log(sort);
+	console.log(filter);
 
 	let field = sort[0];
 	let order = sort[1];
 	let start_index = range[0];
 	let max_entries = range[1];
+	let attribute = null;
+	if (!filter.attribute) {
+		attribute = "isbn_table.title";
+	}
+	else {
+		attribute = filter.attribute.split("|").join(".");
+	}
 
-	let sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+	let sql_query = "";
+	if (filter.q) {
+		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, publisher.company_name as publisher, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id INNER JOIN publishes ON book.isbn=publishes.isbn INNER JOIN publisher on publisher.publisher_id=publishes.publisher_id WHERE ${attribute} LIKE \"${filter.q}\" ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+	}
+	else {
+		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, publisher.company_name as publisher, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id INNER JOIN publishes ON book.isbn=publishes.isbn INNER JOIN publisher on publisher.publisher_id=publishes.publisher_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+	}
 	console.log("GET LISTVIEW QUERY:");
 	console.log(sql_query);
 	console.log();
 
 	connection.query(sql_query, function (err, rows, fields) {
-	  if (err) throw err;
+	  if (err) {
+	  	console.log(err);
+	  	throw err;
+	  }
 	  rows = JSON.parse(JSON.stringify(rows));
 
-	  connection.query("SELECT COUNT(*) as count FROM book;", function (err, count_row, fields) {
+	  connection.query(`SELECT COUNT(*) as count from book;`, function (err, count_row, fields) {
+	  	if (err) {
+	  		console.log(err);
+	  		throw err;
+	  	}
 	  	let output = {data: rows, total: count_row[0]["count"]};
 		res.send(output);
 	  });
@@ -351,6 +358,99 @@ app.get('/isbn/:id', (req, res) => {
 	  
 	});
 
+});
+
+
+app.get('/patrons', (req, res) => {
+
+	let range = null;
+	let sort = null;
+	let filter = null;
+	
+	if (req.query.range == null) {
+		range = [0, 25];
+	}
+	else {
+		range = JSON.parse(req.query.range);
+	}
+	if (req.query.sort == null) {
+		sort = ["patron_id", "ASC"];
+	}
+	else {
+		sort = JSON.parse(req.query.sort);
+	}
+	if (req.query.filter == null) {
+		filter = '';
+	}
+	else {
+		filter = JSON.parse(req.query.filter);
+	}
+
+	let field = sort[0];
+	let order = sort[1];
+	let start_index = range[0];
+	let max_entries = range[1];
+
+	let sql_query = `SELECT patron.patron_id as id, patron.first_name as first_name, patron.last_name as last_name FROM patron ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+	console.log("GET LISTVIEW QUERY:");
+	console.log(sql_query);
+	console.log();
+
+	connection.query(sql_query, function (err, rows, fields) {
+	  if (err) throw err;
+	  rows = JSON.parse(JSON.stringify(rows));
+
+	  connection.query("SELECT COUNT(*) as count FROM patron;", function (err, count_row, fields) {
+	  	let output = {data: rows, total: count_row[0]["count"]};
+		res.send(output);
+	  });
+
+	});
+
+});
+
+
+app.get('/patrons/:id', (req, res) => {
+
+	let sql_query = `SELECT patron_id as id, patron.first_name, patron.last_name FROM patron WHERE patron.patron_id=` + req.params.id + ";";
+
+	console.log("GET ONE RECORD QUERY:");
+	console.log(sql_query);
+	console.log();
+
+	connection.query(sql_query, function (err, rows, fields) {
+	  if (err) throw err;
+	  record = JSON.parse(JSON.stringify(rows))[0];
+	  if (record != null) {
+	  	res.send({data: record});
+	  }
+	  else {
+	  	res.send({status: 404});
+	  }
+	  
+	});
+
+});
+
+//UPDATE
+app.put('/patrons/:id', (req, res) => {
+
+	let update_query = `DELETE FROM checked_out WHERE book_id=${req.body.book_id} and patron_id=${req.params.id}`; 
+
+	let select_query = `SELECT patron_id as id, patron.first_name, patron.last_name FROM patron WHERE patron.patron_id=` + req.params.id + ";";
+
+	console.log("RETURN BOOK QUERY");
+	console.log(update_query);
+	console.log();
+
+	connection.query(update_query, function (err, rows, fields) {
+	  if (err) throw err;
+	    connection.query(select_query, function (err, rows, fields) {
+	      if (err) throw err;
+		  record = JSON.parse(JSON.stringify(rows))[0];
+		  res.send({data: record});
+		});
+	});
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

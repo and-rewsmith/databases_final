@@ -12,10 +12,12 @@ import {
 
 const BookFilter = (props) => (
     <Filter {...props}>
-        <TextInput label="Search" alwaysOn />
-        <ReferenceInput label="test" allowEmpty>
-            <SelectInput optionText="test" />
-        </ReferenceInput>
+        <TextInput label="Search" source="q" alwaysOn />
+        <SelectInput label="Attribute" source="attribute" choices={[
+               { id: 'isbn_table|title', name: 'Title' },
+               { id: 'isbn_table|isbn', name: 'ISBN' },
+               { id: 'author|last_name', name: 'Author Last Name' }
+        ]} />
     </Filter>
 );
 
@@ -73,7 +75,7 @@ function makeRequest (method, url) {
 }
 
 
-const validateBookCreationAsync = (values) => {
+export const validateISBN = (values) => {
      let edit_validation_endpoint = "http://localhost:3001/isbn/" + JSON.stringify(values.isbn);
 
     return makeRequest('GET', edit_validation_endpoint)
@@ -91,7 +93,7 @@ const validateBookCreationAsync = (values) => {
 export const BookEdit = props => (
 
     <Edit title={<BookTitle />} {...props}>
-        <SimpleForm submitOnEnter={false} asyncValidate={validateBookCreationAsync} asyncBlurFields={[ 'isbn' ]}>
+        <SimpleForm submitOnEnter={false} asyncValidate={validateISBN} asyncBlurFields={[ 'isbn' ]}>
             <DisabledInput source="id" />
             <DisabledInput source="title" />
             <DisabledInput source="author" />
@@ -114,7 +116,7 @@ export const BookEdit = props => (
 // reference an ISBN to make a book
 export const BookCreate = props => (
     <Create {...props}>
-        <SimpleForm submitOnEnter={false} redirect="list" asyncValidate={validateBookCreationAsync}>
+        <SimpleForm submitOnEnter={false} redirect="list" asyncValidate={validateISBN}>
             <BooleanInput label="Create an Isbn" source="isIsbn" />
             <FormDataConsumer>
                 {({ formData, ...rest }) => {
