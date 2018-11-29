@@ -459,63 +459,6 @@ app.put('/patrons/:id', (req, res) => {
 });
 
 
-//GET_LIST: ?sort=['title','ASC']&range=[0, 24]&filter={title:'bar'}
-//GET_MANY: ?filter={ids:[123,456,789]}
-//GET_MANY_REFERENCE: ?filter={author_id:345}
-app.get('/books', (req, res) => {
-
-	let range = JSON.parse(req.query.range);
-	let sort = JSON.parse(req.query.sort);
-	let filter = JSON.parse(req.query.filter);
-
-	console.log(range);
-	console.log(sort);
-	console.log(filter);
-
-	let field = sort[0];
-	let order = sort[1];
-	let start_index = range[0];
-	let max_entries = range[1];
-	let attribute = null;
-	if (!filter.attribute) {
-		attribute = "isbn_table.title";
-	}
-	else {
-		attribute = filter.attribute.split("|").join(".");
-	}
-
-	let sql_query = "";
-	if (filter.q) {
-		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE ${attribute} LIKE \"${filter.q}\" ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
-	}
-	else {
-		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
-	}
-	console.log("GET LISTVIEW QUERY:");
-	console.log(sql_query);
-	console.log();
-
-	connection.query(sql_query, function (err, rows, fields) {
-	  if (err) {
-	  	console.log(err);
-	  	throw err;
-	  }
-	  rows = JSON.parse(JSON.stringify(rows));
-
-	  connection.query(`SELECT COUNT(*) as count from book;`, function (err, count_row, fields) {
-	  	if (err) {
-	  		console.log(err);
-	  		throw err;
-	  	}
-	  	let output = {data: rows, total: count_row[0]["count"]};
-		res.send(output);
-	  });
-
-	});
-
-});
-
-
 app.get('/missing_isbn', (req, res) => {
 
 	let range = JSON.parse(req.query.range);
