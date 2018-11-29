@@ -12,6 +12,7 @@ const App = () => (
     <Admin dashboard={Dashboard} dataProvider={dataProvider}>
         <Resource name="books" list={BookList} edit={BookEdit} create={BookCreate}/>
         <Resource name="patrons" list={PatronList} edit={PatronEdit}/>
+        <Resource name="univeral/books" list={ListGuesser}/>
     </Admin>
 );
 

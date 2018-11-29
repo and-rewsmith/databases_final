@@ -36,6 +36,12 @@ var connection = mysql.createConnection({
   database : 'Library',
   port: 3306,
 });
+// var connection = mysql.createConnection({
+//   host     : 'localhost',
+//   user     : 'root',
+//   password : 'password',
+//   database : 'Library',
+// });
 
 
 
@@ -233,10 +239,10 @@ app.get('/books', (req, res) => {
 
 	let sql_query = "";
 	if (filter.q) {
-		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, publisher.company_name as publisher, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id INNER JOIN publishes ON book.isbn=publishes.isbn INNER JOIN publisher on publisher.publisher_id=publishes.publisher_id WHERE ${attribute} LIKE \"${filter.q}\" ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE ${attribute} LIKE \"${filter.q}\" ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
 	}
 	else {
-		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, publisher.company_name as publisher, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id INNER JOIN publishes ON book.isbn=publishes.isbn INNER JOIN publisher on publisher.publisher_id=publishes.publisher_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
 	}
 	console.log("GET LISTVIEW QUERY:");
 	console.log(sql_query);
@@ -271,7 +277,10 @@ app.get('/books/:id', (req, res) => {
 	console.log();
 
 	connection.query(sql_query, function (err, rows, fields) {
-	  if (err) throw err;
+	  if (err) {
+	  	console.log(err);
+	  	throw err;
+	  }
 	  record = JSON.parse(JSON.stringify(rows))[0];
 	  if (record != null) {
 	  	res.send({data: record});
