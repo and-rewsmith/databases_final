@@ -5,96 +5,117 @@ create schema if not exists Library;
 use Library;
 -- set search_path to Library;
 
-create table if not exists patron(
-    patron_id   int NOT NULL AUTO_INCREMENT,
-    last_name   varchar(256)    NOT NULL,
-    first_name  varchar(256)    NOT NULL,
-    email       varchar(256)    NOT NULL,
-    pwd varchar(256)    NOT NULL,
+CREATE TABLE IF NOT EXISTS patron (
+    patron_id INT NOT NULL AUTO_INCREMENT,
+    last_name VARCHAR(256) NOT NULL,
+    first_name VARCHAR(256) NOT NULL,
+    email VARCHAR(256) NOT NULL,
+    pwd VARCHAR(256) NOT NULL,
     PRIMARY KEY (patron_id)
 );
 
-create table if not exists isbn_table(
-    isbn        varchar(15) NOT NULL PRIMARY KEY,
-    title       varchar(3000) NOT NULL,
-    dewey       INT NOT NULL,
-    `format`    ENUM('hard', 'paper'),
-    pages       INT NOT NULL,
-    FULLTEXT idx (title)
-) ENGINE=InnoDB;
+CREATE TABLE IF NOT EXISTS isbn_table (
+    isbn VARCHAR(15) NOT NULL PRIMARY KEY,
+    title VARCHAR(3000) NOT NULL,
+    dewey INT NOT NULL,
+    `format` ENUM('hard', 'paper'),
+    pages INT NOT NULL,
+    FULLTEXT idx ( title )
+)  ENGINE=INNODB;
 
-create table if not exists book(
-    book_id     INT NOT NULL AUTO_INCREMENT,
-    isbn        varchar(15) NOT NULL,
-    con   ENUM('excellent', 'good', 'poor', 'bad') NOT NULL,
-    foreign key (isbn) references isbn_table(isbn),
+CREATE TABLE IF NOT EXISTS book (
+    book_id INT NOT NULL AUTO_INCREMENT,
+    isbn VARCHAR(15) NOT NULL,
+    con ENUM('excellent', 'good', 'poor', 'bad') NOT NULL,
+    FOREIGN KEY (isbn)
+        REFERENCES isbn_table (isbn),
     PRIMARY KEY (book_id)
 );
 
-create table if not exists author(
-    author_id   int NOT NULL AUTO_INCREMENT,
-    last_name   varchar(256)    NOT NULL,
-    first_name  varchar(256)    NOT NULL,
+CREATE TABLE IF NOT EXISTS author (
+    author_id INT NOT NULL AUTO_INCREMENT,
+    last_name VARCHAR(256) NOT NULL,
+    first_name VARCHAR(256) NOT NULL,
     PRIMARY KEY (author_id)
 );
 
-create table if not exists vendor(
-    vendor_id       int NOT NULL AUTO_INCREMENT,
-    company_name    varchar(256)    NOT NULL,
-    address         varchar(256)    NOT NULL,
+CREATE TABLE IF NOT EXISTS vendor (
+    vendor_id INT NOT NULL AUTO_INCREMENT,
+    company_name VARCHAR(256) NOT NULL,
+    address VARCHAR(256) NOT NULL,
     PRIMARY KEY (vendor_id)
 );
 
-create table if not exists publisher(
-    publisher_id    int NOT NULL AUTO_INCREMENT,
-    company_name    varchar(256)    NOT NULL,
-    address         varchar(256)    NOT NULL,
+CREATE TABLE IF NOT EXISTS publisher (
+    publisher_id INT NOT NULL AUTO_INCREMENT,
+    company_name VARCHAR(256) NOT NULL,
+    address VARCHAR(256) NOT NULL,
     PRIMARY KEY (publisher_id)
 );
 
-create table if not exists writes(
-    write_id    int NOT NULL AUTO_INCREMENT,
-    isbn        varchar(15) NOT NULL,
-    author_id   int NOT NULL,
-    foreign key (author_id) references author(author_id) ON DELETE CASCADE,
-    foreign key (isbn) references isbn_table(isbn) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS writes (
+    write_id INT NOT NULL AUTO_INCREMENT,
+    isbn VARCHAR(15) NOT NULL,
+    author_id INT NOT NULL,
+    FOREIGN KEY (author_id)
+        REFERENCES author (author_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (isbn)
+        REFERENCES isbn_table (isbn)
+        ON DELETE CASCADE,
     PRIMARY KEY (write_id)
 );
 
-create table if not exists sells(
-    sell_id int NOT NULL AUTO_INCREMENT,
-    isbn        varchar(15) NOT NULL,
-    vendor_id   int NOT NULL,
-    foreign key (vendor_id) references vendor(vendor_id) ON DELETE CASCADE,
-    foreign key (isbn) references isbn_table(isbn) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS sells (
+    sell_id INT NOT NULL AUTO_INCREMENT,
+    isbn VARCHAR(15) NOT NULL,
+    vendor_id INT NOT NULL,
+    FOREIGN KEY (vendor_id)
+        REFERENCES vendor (vendor_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (isbn)
+        REFERENCES isbn_table (isbn)
+        ON DELETE CASCADE,
     PRIMARY KEY (sell_id)
 );
 
-create table if not exists publishes(
-    publish_id int NOT NULL AUTO_INCREMENT,
-    isbn        varchar(15) NOT NULL,
-    publisher_id   int NOT NULL,
-    foreign key (publisher_id) references publisher(publisher_id) ON DELETE CASCADE,
-    foreign key (isbn) references isbn_table(isbn) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS publishes (
+    publish_id INT NOT NULL AUTO_INCREMENT,
+    isbn VARCHAR(15) NOT NULL,
+    publisher_id INT NOT NULL,
+    FOREIGN KEY (publisher_id)
+        REFERENCES publisher (publisher_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (isbn)
+        REFERENCES isbn_table (isbn)
+        ON DELETE CASCADE,
     PRIMARY KEY (publish_id)
 );
 
-create table if not exists checked_out(
-    checked_out_id int NOT NULL AUTO_INCREMENT,
-    book_id        int NOT NULL,
-    patron_id   int NOT NULL,
-    start_date  date NOT NULL,
-    foreign key (book_id) references book(book_id) ON DELETE CASCADE,
-    foreign key (patron_id) references patron(patron_id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS checked_out (
+    checked_out_id INT NOT NULL AUTO_INCREMENT,
+    book_id INT NOT NULL,
+    patron_id INT NOT NULL,
+    start_date DATE NOT NULL,
+    FOREIGN KEY (book_id)
+        REFERENCES book (book_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (patron_id)
+        REFERENCES patron (patron_id)
+        ON DELETE CASCADE,
     PRIMARY KEY (checked_out_id)
 );
 
-create table if not exists reserves(
-    reserves_id int NOT NULL AUTO_INCREMENT,
-    book_id        int NOT NULL,
-    patron_id   int NOT NULL,
-    foreign key (book_id) references book(book_id) ON DELETE CASCADE,
-    foreign key (patron_id) references patron(patron_id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS reserves (
+    reserves_id INT NOT NULL AUTO_INCREMENT,
+    book_id INT NOT NULL,
+    patron_id INT NOT NULL,
+    FOREIGN KEY (book_id)
+        REFERENCES book (book_id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (patron_id)
+        REFERENCES patron (patron_id)
+        ON DELETE CASCADE,
     PRIMARY KEY (reserves_id)
 );
 
@@ -281,6 +302,12 @@ insert into isbn_table (isbn, title, dewey, `format`, pages) values("97898487659
 insert into isbn_table (isbn, title, dewey, `format`, pages) values("9789847390253", "Miseries of Misconceived Democracy", 212, "hard", 272);
 insert into isbn_table (isbn, title, dewey, `format`, pages) values("9848299319", "Socio-Political Attitudes, Values And Personality A Study in Bangladesh and India", 323, "hard", 400);
 insert into isbn_table (isbn, title, dewey, `format`, pages) values("9841105619", "As I See Sierr Leone", 782, "hard", 62);
+insert into isbn_table (isbn, title, dewey, `format`, pages) values("439023483", "The Hunger Games (The Hunger Games, #1)", 512, "hard", 362);
+insert into isbn_table (isbn, title, dewey, `format`, pages) values("439554934", "Harry Potter and the Sorcerer's Stone (Harry Potter, #1)", 329, "hard", 500);
+insert into isbn_table (isbn, title, dewey, `format`, pages) values("316015849", "Twilight (Twilight, #1)", 620, "paper", 650);
+insert into isbn_table (isbn, title, dewey, `format`, pages) values("61120081", "To Kill a Mockingbird", 948, "hard", 326);
+insert into isbn_table (isbn, title, dewey, `format`, pages) values("743273567", "The Great Gatsby", 054, "paper", 846);
+
 
 insert into writes (isbn, author_id) values("9847010501391", 37);
 insert into writes (isbn, author_id) values("9847010502190", 57);
@@ -1070,6 +1097,11 @@ insert into publishes (isbn, publisher_id) values("9789848765906", 8);
 insert into publishes (isbn, publisher_id) values("9789847390253", 2);
 insert into publishes (isbn, publisher_id) values("9848299319", 1);
 insert into publishes (isbn, publisher_id) values("9841105619", 10);
+insert into publishes (isbn, publisher_id) values("439023483", 10);
+insert into publishes (isbn, publisher_id) values("439554934", 6);
+insert into publishes (isbn, publisher_id) values("316015849", 1);
+insert into publishes (isbn, publisher_id) values("61120081", 5);
+insert into publishes (isbn, publisher_id) values("743273567", 6);
 
 insert into vendor (company_name, address) values("Castaneda and Sons", "699 Johnson Vista");
 insert into vendor (company_name, address) values("Gonzalez and Sons", "9557 Amanda Hills Suite 610");
@@ -1295,6 +1327,11 @@ insert into sells (isbn, vendor_id) values("9789847390253", 11);
 insert into sells (isbn, vendor_id) values("9848299319", 19);
 insert into sells (isbn, vendor_id) values("9841105619", 17);
 insert into sells (isbn, vendor_id) values("9841105619", 12);
+insert into sells (isbn, vendor_id) values("439023483", 17);
+insert into sells (isbn, vendor_id) values("439554934", 3);
+insert into sells (isbn, vendor_id) values("316015849", 9);
+insert into sells (isbn, vendor_id) values("61120081", 18);
+insert into sells (isbn, vendor_id) values("743273567", 8);
 
 insert into patron (first_name, last_name, email, pwd) values("Mcfarlane", "Eleanor", "em7ae@library.com", "JrEHs#8d");
 insert into patron (first_name, last_name, email, pwd) values("Andrade", "Hugo", "ha1vn@library.com", "!Idb6G2m");
@@ -1488,3 +1525,11 @@ insert into reserves (book_id, patron_id) values(172, 5);
 insert into reserves (book_id, patron_id) values(91, 1);
 insert into reserves (book_id, patron_id) values(266, 4);
 insert into reserves (book_id, patron_id) values(78, 5);
+
+
+
+
+
+
+
+

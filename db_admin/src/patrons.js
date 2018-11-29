@@ -23,7 +23,7 @@ export const PatronEdit = props => (
 );
 
 export const PatronList = props => (
-    <List {...props}>
+    <List title="Patrons"{...props}>
         <Datagrid rowClick="edit">
             <TextField source="id" />
             <TextField source="first_name" />

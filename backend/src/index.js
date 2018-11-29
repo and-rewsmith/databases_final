@@ -221,10 +221,6 @@ app.get('/books', (req, res) => {
 	let sort = JSON.parse(req.query.sort);
 	let filter = JSON.parse(req.query.filter);
 
-	console.log(range);
-	console.log(sort);
-	console.log(filter);
-
 	let field = sort[0];
 	let order = sort[1];
 	let start_index = range[0];
@@ -461,5 +457,108 @@ app.put('/patrons/:id', (req, res) => {
 		});
 	});
 });
+
+
+//GET_LIST: ?sort=['title','ASC']&range=[0, 24]&filter={title:'bar'}
+//GET_MANY: ?filter={ids:[123,456,789]}
+//GET_MANY_REFERENCE: ?filter={author_id:345}
+app.get('/books', (req, res) => {
+
+	let range = JSON.parse(req.query.range);
+	let sort = JSON.parse(req.query.sort);
+	let filter = JSON.parse(req.query.filter);
+
+	console.log(range);
+	console.log(sort);
+	console.log(filter);
+
+	let field = sort[0];
+	let order = sort[1];
+	let start_index = range[0];
+	let max_entries = range[1];
+	let attribute = null;
+	if (!filter.attribute) {
+		attribute = "isbn_table.title";
+	}
+	else {
+		attribute = filter.attribute.split("|").join(".");
+	}
+
+	let sql_query = "";
+	if (filter.q) {
+		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id WHERE ${attribute} LIKE \"${filter.q}\" ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+	}
+	else {
+		sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+	}
+	console.log("GET LISTVIEW QUERY:");
+	console.log(sql_query);
+	console.log();
+
+	connection.query(sql_query, function (err, rows, fields) {
+	  if (err) {
+	  	console.log(err);
+	  	throw err;
+	  }
+	  rows = JSON.parse(JSON.stringify(rows));
+
+	  connection.query(`SELECT COUNT(*) as count from book;`, function (err, count_row, fields) {
+	  	if (err) {
+	  		console.log(err);
+	  		throw err;
+	  	}
+	  	let output = {data: rows, total: count_row[0]["count"]};
+		res.send(output);
+	  });
+
+	});
+
+});
+
+
+app.get('/missing_isbn', (req, res) => {
+
+	let range = JSON.parse(req.query.range);
+	let sort = JSON.parse(req.query.sort);
+	let filter = JSON.parse(req.query.filter);
+
+	let field = sort[0];
+	let order = sort[1];
+	let start_index = range[0];
+	let max_entries = range[1];
+	let attribute = null;
+
+	// let sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+	let lacking_isbn_query = `SELECT isbn_table.isbn AS id,isbn_table.title,isbn_table.dewey,isbn_table.format,isbn_table.pages,publisher.company_name AS publisher,vendor.company_name AS vendor FROM isbn_table LEFT OUTER JOIN publishes ON isbn_table.isbn = publishes.isbn LEFT OUTER JOIN publisher ON publishes.publisher_id = publisher.publisher_id LEFT OUTER JOIN sells ON isbn_table.isbn = sells.isbn LEFT OUTER JOIN vendor ON vendor.vendor_id = sells.vendor_id WHERE isbn_table.isbn NOT IN (SELECT book.isbn FROM book INNER JOIN isbn_table ON book.isbn = isbn_table.isbn) ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`
+	console.log("GET LISTVIEW QUERY:");
+	console.log(lacking_isbn_query);
+	console.log();
+
+	connection.query(lacking_isbn_query, function (err, rows, fields) {
+	  if (err) {
+	  	console.log(err);
+	  	throw err;
+	  }
+	  rows = JSON.parse(JSON.stringify(rows));
+
+	  connection.query(`SELECT COUNT(*) as count from isbn_table WHERE isbn_table.isbn NOT IN (SELECT book.isbn FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn);`, function (err, count_row, fields) {
+	  	if (err) {
+	  		console.log(err);
+	  		throw err;
+	  	}
+	  	let output = {data: rows, total: count_row[0]["count"]};
+	  	for (i=0; i<output.data.length;i++) {
+	  		if (!output.data[i].vendor) {
+	  			output.data[i].vendor = "Castenada and Sons";
+	  			output.data[i].publisher = "Morton, Adams, and Ray";
+	  		}
+	  	}
+		res.send(output);
+	  });
+
+	});
+
+});
+
 
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));

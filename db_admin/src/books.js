@@ -23,7 +23,7 @@ const BookFilter = (props) => (
 
 
 export const BookList = props => (
-    <List title="Library Administration Portal" {...props} filters={<BookFilter />}>
+    <List title="Books in Library" {...props} filters={<BookFilter />}>
 	    <Datagrid>
 	        <TextField source="id" />
 	        <TextField source="title" />
