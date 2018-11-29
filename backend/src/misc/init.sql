@@ -1,4 +1,3 @@
-
 drop schema if exists Library;
 
 create schema if not exists Library;
@@ -16,13 +15,13 @@ create table if not exists patron(
 );
 
 create table if not exists isbn_table(
-    isbn        varchar(15) NOT NULL,
+    isbn        varchar(15) NOT NULL PRIMARY KEY,
     title       varchar(3000) NOT NULL,
     dewey       INT NOT NULL,
     `format`    ENUM('hard', 'paper'),
     pages       INT NOT NULL,
-    PRIMARY KEY (isbn)
-);
+    FULLTEXT idx (title)
+) ENGINE=InnoDB;
 
 create table if not exists book(
     book_id     INT NOT NULL AUTO_INCREMENT,
@@ -31,13 +30,6 @@ create table if not exists book(
     foreign key (isbn) references isbn_table(isbn),
     PRIMARY KEY (book_id)
 );
-
--- create table if not exists uuid(
---     uuid        INT,
---     book_id     INT,
---     PRIMARY KEY (uuid),
---     foreign key (book_id) references book(book_id)
--- );
 
 create table if not exists author(
     author_id   int NOT NULL AUTO_INCREMENT,
