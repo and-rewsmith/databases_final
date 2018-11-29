@@ -1,0 +1,20 @@
+BOOKS
+    LIST 
+    PAGINATION
+    DELETE 
+    EDIT 
+    SEARCH
+
+PATRON
+    LIST
+    RETURN books
+
+ISBNS OUTSIDE LIBRARY
+    LIST
+    Book create with isbn    
+
+BOOKS
+    CREATE BOOK
+    ADD ISBN
+    CREATE THE BOOK
+
