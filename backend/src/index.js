@@ -471,7 +471,7 @@ app.get('/missing_isbn', (req, res) => {
 	let max_entries = range[1];
 	let attribute = null;
 
-	// let sql_query = `SELECT book.book_id as id, isbn_table.title, CONCAT(author.first_name, ' ', author.last_name) as author, isbn_table.format, isbn_table.pages, book.isbn, isbn_table.dewey, book.con FROM book INNER JOIN isbn_table on book.isbn=isbn_table.isbn INNER JOIN writes on book.isbn=writes.isbn INNER JOIN author on writes.author_id=author.author_id ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`;
+
 	let lacking_isbn_query = `SELECT isbn_table.isbn AS id,isbn_table.title,isbn_table.dewey,isbn_table.format,isbn_table.pages,publisher.company_name AS publisher,vendor.company_name AS vendor FROM isbn_table LEFT OUTER JOIN publishes ON isbn_table.isbn = publishes.isbn LEFT OUTER JOIN publisher ON publishes.publisher_id = publisher.publisher_id LEFT OUTER JOIN sells ON isbn_table.isbn = sells.isbn LEFT OUTER JOIN vendor ON vendor.vendor_id = sells.vendor_id WHERE isbn_table.isbn NOT IN (SELECT book.isbn FROM book INNER JOIN isbn_table ON book.isbn = isbn_table.isbn) ORDER BY ${field} ${order} LIMIT ${range[0]}, ${range[1]};`
 	console.log("GET LISTVIEW QUERY:");
 	console.log(lacking_isbn_query);
